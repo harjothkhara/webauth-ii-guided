@@ -18,15 +18,17 @@ router.post('/register', (req, res) => {
     });
 });
 
-router.post('/login', (req, res) => {
+router.post('/login', (req, res) => { //i want to save info about logged in users when they login
   let { username, password } = req.body;
 
   Users.findBy({ username })
     .first()
     .then(user => {
       if (user && bcrypt.compareSync(password, user.password)) {
+        req.session.username = user.username; // <<<<<<<<<<<<<<<<<<<<<<<
+        // the cookie is sent by the express-session library
         res.status(200).json({
-          message: `Welcome ${user.username}!`,
+          message: `Welcome ${user.username}, have a cookie!`,
         });
       } else {
         res.status(401).json({ message: 'Invalid Credentials' });
@@ -35,6 +37,20 @@ router.post('/login', (req, res) => {
     .catch(error => {
       res.status(500).json(error);
     });
+});
+
+router.get('/', (req, res) => {
+  if(req.session) { //do you have a session
+    req.session.destroy(err => { //if you do have a session
+      if(err) { //errors
+        res.send('you can checkout any time you like, but you can never leave..')
+      } else { 
+        res.send('bye')
+      }
+    });
+  } else { //if you don't have a session
+    res.end('already logged out')
+  }
 });
 
 module.exports = router;
